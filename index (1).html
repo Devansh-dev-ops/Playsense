@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlaySense — Local PC Game Optimizer</title>
+    <meta name="description" content="PlaySense is a free, open-source PC game optimizer that scans your hardware, imports your games, and injects smart performance tweaks.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #060e1a;
+            color: #c8d6e5;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Orbitron', sans-serif; }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #060e1a; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff6b35, #f7931e); border-radius: 4px; }
+
+        /* ===== ANIMATED BACKGROUND ===== */
+        .bg-glow {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none; overflow: hidden;
+        }
+        .bg-glow::before, .bg-glow::after {
+            content: ''; position: absolute; border-radius: 50%;
+            filter: blur(120px); opacity: 0.12;
+        }
+        .bg-glow::before {
+            width: 600px; height: 600px; top: -100px; right: -100px;
+            background: radial-gradient(circle, #ff6b35, transparent 70%);
+            animation: float-glow 12s ease-in-out infinite alternate;
+        }
+        .bg-glow::after {
+            width: 500px; height: 500px; bottom: -100px; left: -100px;
+            background: radial-gradient(circle, #f7931e, transparent 70%);
+            animation: float-glow 15s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes float-glow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, 40px) scale(1.15); }
+        }
+
+        /* ===== GRID OVERLAY ===== */
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,107,53,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,107,53,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* ===== UTILITY ===== */
+        .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
+        .section { padding: 100px 0; position: relative; }
+        .section-label {
+            display: inline-block;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.58rem; font-weight: 600;
+            letter-spacing: 3px; text-transform: uppercase;
+            color: #ff6b35;
+            background: rgba(255,107,53,0.06);
+            padding: 5px 14px; border-radius: 100px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,107,53,0.15);
+        }
+        .section-title {
+            font-size: clamp(1.7rem, 4vw, 2.6rem);
+            font-weight: 800; line-height: 1.15;
+            margin-bottom: 14px;
+        }
+        .section-sub { font-size: 0.95rem; color: #5a7a90; max-width: 520px; line-height: 1.7; }
+        .text-center { text-align: center; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 100; padding: 14px 0;
+            background: rgba(6,14,26,0.6);
+            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255,107,53,0.04);
+            transition: all 0.4s;
+        }
+        .navbar.scrolled { background: rgba(6,14,26,0.9); border-bottom-color: rgba(255,107,53,0.08); }
+        .navbar .container { display: flex; align-items: center; justify-content: space-between; }
+        .navbar-brand {
+            display: flex; align-items: center; gap: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.05rem; font-weight: 800; color: #fff;
+        }
+        .navbar-brand .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem;
+            box-shadow: 0 0 20px rgba(255,107,53,0.3);
+        }
+        .navbar-links { display: flex; align-items: center; gap: 24px; list-style: none; }
+        .navbar-links a {
+            font-size: 0.78rem; font-weight: 500; color: #5a7a90;
+            transition: color 0.3s; position: relative;
+            text-decoration: none;
+        }
+        .navbar-links a::after {
+            content: ''; position: absolute; bottom: -3px; left: 0;
+            width: 0; height: 2px;
+            background: linear-gradient(90deg, #ff6b35, #f7931e);
+            transition: width 0.3s;
+        }
+        .navbar-links a:hover { color: #ffbe76; }
+        .navbar-links a:hover::after { width: 100%; }
+        .navbar-cta {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: #fff !important; padding: 7px 18px;
+            border-radius: 8px; font-weight: 700;
+            font-size: 0.75rem !important;
+            box-shadow: 0 4px 20px rgba(255,107,53,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .navbar-cta::after { display: none !important; }
+        .navbar-cta:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(255,107,53,0.35); }
+        .mobile-toggle { display: none; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+
+        /* ===== HERO ===== */
+        .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 80px; position: relative; }
+        .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; perspective: 1200px; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 0.68rem; font-weight: 600;
+            color: #ff6b35;
+            background: rgba(255,107,53,0.06);
+            border: 1px solid rgba(255,107,53,0.15);
+            padding: 5px 13px; border-radius: 100px;
+            margin-bottom: 18px;
+            font-family: 'Orbitron', sans-serif; letter-spacing: 1px;
+        }
+        .hero-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: #ff6b35; animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; box-shadow: 0 0 6px #ff6b35; } 50% { opacity: 0.3; box-shadow: 0 0 2px #ff6b35; } }
+        .hero h1 { font-size: clamp(1.9rem, 4.5vw, 3rem); font-weight: 900; line-height: 1.1; margin-bottom: 16px; }
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, #ff6b35, #ffbe76, #f7931e, #ff6b35);
+            background-size: 300% 300%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            animation: shimmer 5s ease-in-out infinite;
+        }
+        @keyframes shimmer { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .hero p { font-size: 0.95rem; color: #5a7a90; max-width: 420px; margin-bottom: 24px; line-height: 1.75; }
+        .hero-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 12px 24px; border-radius: 10px;
+            font-weight: 700; font-size: 0.82rem;
+            border: none; cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(255,107,53,0.2);
+        }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 40px rgba(255,107,53,0.3); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.03); color: #c8d6e5;
+            border: 1px solid rgba(255,255,255,0.07);
+            backdrop-filter: blur(10px);
+        }
+        .btn-secondary:hover { transform: translateY(-3px); background: rgba(255,255,255,0.06); border-color: rgba(255,107,53,0.2); }
+
+        /* ===== 3D TILT HERO CARD ===== */
+        .hero-visual { display: flex; justify-content: center; align-items: center; }
+        .tilt-card-wrapper { perspective: 1000px; }
+        .hero-card {
+            width: 100%; max-width: 400px;
+            background: linear-gradient(145deg, rgba(20,38,52,0.5), rgba(6,14,26,0.8));
+            border: 1px solid rgba(255,107,53,0.08);
+            border-radius: 18px; padding: 22px;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(255,107,53,0.05);
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out, box-shadow 0.3s;
+            position: relative;
+            animation: card-float 6s ease-in-out infinite;
+        }
+        @keyframes card-float {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .tilt-card-wrapper:hover .hero-card { animation-play-state: paused; }
+        .hero-card::before {
+            content: ''; position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            border-radius: 19px;
+            background: linear-gradient(135deg, rgba(255,107,53,0.2), transparent, rgba(247,147,30,0.1));
+            z-index: -1; opacity: 0.6;
+        }
+        .hero-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px; padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,107,53,0.06);
+        }
+        .hero-card-header span { font-size: 0.65rem; color: #5a7a90; font-weight: 600; font-family: 'Orbitron', sans-serif; letter-spacing: 1.5px; }
+        .hero-card-header .status { display: flex; align-items: center; gap: 6px; color: #ff6b35; font-size: 0.65rem; }
+        .hero-card-header .status .dot { width: 5px; height: 5px; border-radius: 50%; background: #ff6b35; animation: pulse-dot 2s infinite; }
+        .hero-card-item { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+        .hero-card-item:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .hero-card-item .icon {
+            width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; flex-shrink: 0;
+        }
+        .hero-card-item .icon--cpu { background: rgba(255,107,53,0.1); }
+        .hero-card-item .icon--gpu { background: rgba(247,147,30,0.1); }
+        .hero-card-item .icon--ram { background: rgba(255,107,53,0.1); }
+        .hero-card-item .icon--tier { background: rgba(247,147,30,0.1); }
+        .hero-card-item .info { flex: 1; }
+        .hero-card-item .info .label { font-size: 0.55rem; color: #5a7a90; text-transform: uppercase; letter-spacing: 1px; font-family: 'Orbitron', sans-serif; }
+        .hero-card-item .info .value { font-size: 0.78rem; font-weight: 600; color: #fff; }
+        .hero-card-item .badge-tier {
+            font-size: 0.55rem; font-weight: 700; padding: 3px 9px;
+            border-radius: 100px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: #fff; font-family: 'Orbitron', sans-serif; letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(255,107,53,0.3);
+        }
+        .perf-bar { margin-top: 10px; padding-top: 10px; }
+        .perf-bar .bar-label { display: flex; justify-content: space-between; font-size: 0.55rem; font-family: 'Orbitron', sans-serif; margin-bottom: 5px; color: #5a7a90; }
+        .perf-bar .bar-label span:last-child { color: #ff6b35; }
+        .perf-bar .bar-track { height: 4px; border-radius: 100px; overflow: hidden; background: rgba(255,255,255,0.03); }
+        .perf-bar .bar-fill { height: 100%; width: 0; border-radius: 100px; background: linear-gradient(90deg, #ff6b35, #f7931e); transition: width 1.5s ease-out; }
+
+        /* ===== GLASS CARDS ===== */
+        .glass-card {
+            background: linear-gradient(145deg, rgba(20,38,52,0.35), rgba(6,14,26,0.5));
+            border: 1px solid rgba(255,107,53,0.04);
+            border-radius: 16px;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            transition: transform 0.35s, border-color 0.35s, box-shadow 0.35s;
+        }
+        .glass-card:hover { border-color: rgba(255,107,53,0.12); box-shadow: 0 16px 50px rgba(0,0,0,0.3); }
+
+        /* ===== FEATURES ===== */
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 40px; }
+        .feature-card { padding: 24px 22px; position: relative; overflow: hidden; }
+        .feature-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, #ff6b35, #f7931e, transparent);
+            opacity: 0; transition: opacity 0.4s;
+        }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-card:hover { transform: translateY(-5px) scale(1.01); }
+        .feature-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem; margin-bottom: 14px;
+        }
+        .feature-icon--scan { background: rgba(255,107,53,0.1); }
+        .feature-icon--import { background: rgba(247,147,30,0.1); }
+        .feature-icon--tweak { background: rgba(255,107,53,0.1); }
+        .feature-icon--chat { background: rgba(247,147,30,0.1); }
+        .feature-card h3 { font-size: 0.98rem; font-weight: 700; margin-bottom: 9px; color: #fff; }
+        .feature-card p { font-size: 0.83rem; color: #5a7a90; line-height: 1.7; }
+        .feature-card code { background: rgba(255,107,53,0.06); color: #ff6b35; padding: 1px 5px; border-radius: 3px; font-size: 0.73rem; }
+
+        /* ===== GAMER GEAR ===== */
+        .gear-section { background: rgba(0,0,0,0.08); }
+        .gear-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 36px; }
+        .gear-card { padding: 18px; }
+        .gear-card:hover { transform: translateY(-4px) scale(1.01); }
+        .gear-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .gear-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.05rem;
+            background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(247,147,30,0.03));
+        }
+        .gear-name { font-size: 0.86rem; font-weight: 700; color: #fff; }
+        .gear-brand { font-size: 0.63rem; color: #5a7a90; }
+        .gear-specs { font-size: 0.76rem; color: #5a7a90; line-height: 1.55; margin-bottom: 7px; }
+        .gear-price { font-family: 'Orbitron', sans-serif; font-size: 0.88rem; font-weight: 700; color: #ff6b35; }
+
+        /* ===== UPGRADES ===== */
+        .upgrades-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 36px; }
+        .upgrade-card {
+            background: rgba(20,38,52,0.25);
+            border: 1px solid rgba(255,255,255,0.025);
+            border-radius: 12px; padding: 20px 12px;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        .upgrade-card:hover { transform: translateY(-3px) scale(1.02); border-color: rgba(255,107,53,0.1); }
+        .upgrade-card .emoji { font-size: 1.6rem; margin-bottom: 6px; }
+        .upgrade-card h4 { font-size: 0.84rem; font-weight: 700; color: #fff; margin-bottom: 3px; }
+        .upgrade-card p { font-size: 0.7rem; color: #5a7a90; line-height: 1.4; }
+
+        /* ===== HOW IT WORKS ===== */
+        .steps-section { background: rgba(0,0,0,0.08); }
+        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px; margin-top: 40px; }
+        .step { text-align: center; }
+        .step-number {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.05rem; font-weight: 800; color: #fff;
+            margin: 0 auto 12px;
+            box-shadow: 0 4px 20px rgba(255,107,53,0.25);
+            position: relative;
+        }
+        .step-number::after {
+            content: ''; position: absolute; inset: -5px;
+            border-radius: 50%; border: 1px solid rgba(255,107,53,0.12);
+        }
+        .step h4 { font-size: 0.92rem; font-weight: 700; color: #fff; margin-bottom: 7px; }
+        .step p { font-size: 0.82rem; color: #5a7a90; line-height: 1.6; }
+
+        /* ===== CTA ===== */
+        .cta-section {
+            background: linear-gradient(135deg, rgba(255,107,53,0.02), rgba(247,147,30,0.02));
+            border-top: 1px solid rgba(255,107,53,0.04);
+            border-bottom: 1px solid rgba(255,107,53,0.04);
+        }
+        .cta-box { text-align: center; max-width: 540px; margin: 0 auto; }
+        .cta-box h2 {
+            font-size: clamp(1.4rem, 3.2vw, 2.1rem); font-weight: 800; margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff, #ffbe76, #ff6b35);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .cta-box p { color: #5a7a90; font-size: 0.92rem; margin-bottom: 22px; }
+        .cta-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+
+        /* ===== FOOTER ===== */
+        .footer { padding: 44px 0 28px; border-top: 1px solid rgba(255,107,53,0.03); position: relative; z-index: 2; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 28px; margin-bottom: 22px; }
+        .footer-brand p { font-size: 0.76rem; color: #5a7a90; margin-top: 8px; max-width: 260px; line-height: 1.65; }
+        .footer-col h5 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.55rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 2px;
+            color: #fff; margin-bottom: 11px;
+        }
+        .footer-col ul { list-style: none; }
+        .footer-col ul li { margin-bottom: 5px; }
+        .footer-col ul a { font-size: 0.76rem; color: #5a7a90; transition: color 0.3s; text-decoration: none; }
+        .footer-col ul a:hover { color: #ff6b35; }
+        .footer-bottom {
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.02);
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;
+        }
+        .footer-bottom p { font-size: 0.68rem; color: #3d5568; }
+
+        /* ===== SCROLL REVEAL ===== */
+        .fade-in { opacity: 0; transform: translateY(22px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+        .fade-in-delay-1 { transition-delay: 0.1s; }
+        .fade-in-delay-2 { transition-delay: 0.2s; }
+        .fade-in-delay-3 { transition-delay: 0.3s; }
+
+        /* ===== PARTICLE CANVAS ===== */
+        #particle-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+
+        /* ===== TYPEWRITER CURSOR ===== */
+        .type-cursor {
+            display: inline-block; width: 3px; height: 1em;
+            background: #ff6b35; margin-left: 3px;
+            animation: cursor-blink 0.7s step-end infinite;
+            vertical-align: middle; opacity: 1;
+        }
+        .type-cursor.hidden { opacity: 0; animation: none; }
+        @keyframes cursor-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+        #type-brand, #type-line1, #type-line2 { min-height: 1em; display: inline-block; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .hero-grid { grid-template-columns: 1fr; gap: 28px; }
+            .hero p { max-width: 100%; }
+            .hero-visual { order: -1; }
+            .hero-card { max-width: 100%; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .navbar-links { display: none; }
+            .mobile-toggle { display: block; }
+            .navbar-links.open {
+                display: flex; flex-direction: column;
+                position: absolute; top: 100%; left: 0; right: 0;
+                background: rgba(6,14,26,0.98);
+                padding: 18px; gap: 14px;
+                border-bottom: 1px solid rgba(255,107,53,0.08);
+            }
+            .section { padding: 56px 0; }
+            .features-grid { grid-template-columns: 1fr; }
+            .gear-grid { grid-template-columns: 1fr; }
+            .upgrades-grid { grid-template-columns: 1fr 1fr; }
+            .steps { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; gap: 16px; }
+            .footer-bottom { flex-direction: column; text-align: center; }
+        }
+        @media (max-width: 480px) {
+            .upgrades-grid { grid-template-columns: 1fr; }
+            .hero-buttons, .cta-buttons { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== BACKGROUND EFFECTS ===== -->
+    <div class="bg-glow"></div>
+    <div class="bg-grid"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="navbar" role="navigation">
+        <div class="container">
+            <a href="#" class="navbar-brand">
+                <span class="logo-icon">🎮</span>
+                PlaySense
+            </a>
+            <button class="mobile-toggle" aria-label="Toggle menu" onclick="document.querySelector('.navbar-links').classList.toggle('open')">☰</button>
+            <ul class="navbar-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#gear">Gear</a></li>
+                <li><a href="#upgrades">Upgrades</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#download" class="navbar-cta">Download</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="download">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-text">
+                    <div class="hero-badge">
+                        <span class="dot"></span>
+                        v0.3.0 — Free & Open Source
+                    </div>
+                    <h1 id="hero-title">
+                        <span class="gradient-text" id="type-brand"></span><br>
+                        <span id="type-line1"></span><br>
+                        <span id="type-line2"></span>
+                        <span class="type-cursor" id="type-cursor"></span>
+                    </h1>
+                    <p>
+                        A completely free app that runs entirely on your machine — no cloud, no data collection, no subscriptions.
+                        It scans your hardware, imports any game, and injects smart performance tweaks automatically.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#features" class="btn btn-primary">
+                            🚀 Explore Features
+                        </a>
+                        <a href="https://github.com" target="_blank" rel="noopener" class="btn btn-secondary">
+                            📦 View on GitHub
+                        </a>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="tilt-card-wrapper" id="tilt-wrapper">
+                        <div class="hero-card" id="tilt-card">
+                            <div class="hero-card-header">
+                                <span>SYSTEM SCAN</span>
+                                <span class="status"><span class="dot"></span> Live</span>
+                            </div>
+                            <div class="hero-card-item">
+                                <div class="icon icon--cpu">⚡</div>
+                                <div class="info">
+                                    <div class="label">Processor</div>
+                                    <div class="value">Intel Core i7-14700K</div>
+                                </div>
+                                <span class="badge-tier">ULTRA</span>
+                            </div>
+                            <div class="hero-card-item">
+                                <div class="icon icon--gpu">🎮</div>
+                                <div class="info">
+                                    <div class="label">GPU</div>
+                                    <div class="value">RTX 4070 Ti (12GB)</div>
+                                </div>
+                            </div>
+                            <div class="hero-card-item">
+                                <div class="icon icon--ram">💾</div>
+                                <div class="info">
+                                    <div class="label">Memory</div>
+                                    <div class="value">64GB DDR5 @ 6000MHz</div>
+                                </div>
+                            </div>
+                            <div class="hero-card-item">
+                                <div class="icon icon--tier">🏆</div>
+                                <div class="info">
+                                    <div class="label">Tier</div>
+                                    <div class="value">Ultra — 4K Ready</div>
+                                </div>
+                            </div>
+                            <div class="perf-bar">
+                                <div class="bar-label"><span>Optimization</span><span>94%</span></div>
+                                <div class="bar-track"><div class="bar-fill" id="perf-fill"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== FEATURES ===== -->
+    <section class="section" id="features">
+        <div class="container">
+            <div class="text-center fade-in">
+                <span class="section-label">Core Features</span>
+                <h2 class="section-title" style="background: linear-gradient(135deg, #fff, #ffbe76, #ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    Everything You Need,<br>Nothing You Don't
+                </h2>
+                <p class="section-sub mx-auto">
+                    PlaySense runs 100% locally on your Windows PC. No internet required, no data ever leaves your machine.
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="glass-card feature-card fade-in fade-in-delay-1">
+                    <div class="feature-icon feature-icon--scan">🔍</div>
+                    <h3>Hardware Scan</h3>
+                    <p>Detects your CPU, GPU, RAM, and OS in real time using native Windows APIs. Automatically assigns a performance tier so every optimization is tailored to your exact machine.</p>
+                </div>
+                <div class="glass-card feature-card fade-in fade-in-delay-2">
+                    <div class="feature-icon feature-icon--import">📂</div>
+                    <h3>Game Import</h3>
+                    <p>Import from Steam, Epic, GOG or any .exe folder using the native Windows File Dialog. All paths are saved persistently to a local JSON database.</p>
+                </div>
+                <div class="glass-card feature-card fade-in fade-in-delay-1">
+                    <div class="feature-icon feature-icon--tweak">⚙️</div>
+                    <h3>Smart Tweaks</h3>
+                    <p>Scans game folders and AppData for config files. Modifies fields like <code>ShadowQuality</code>, <code>VolumetricFog</code>, and <code>ResolutionScale</code>. Includes a dedicated Unreal Engine 5 injector.</p>
+                </div>
+                <div class="glass-card feature-card fade-in fade-in-delay-2">
+                    <div class="feature-icon feature-icon--chat">🤖</div>
+                    <h3>AI Crash Analyzer</h3>
+                    <p>Reads Windows Event Viewer logs and game dump files. Matches error codes against known failure patterns and recommends actionable fixes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== GAMER GEAR ===== -->
+    <section class="section gear-section" id="gear">
+        <div class="container">
+            <div class="text-center fade-in">
+                <span class="section-label">Gamer's Gear</span>
+                <h2 class="section-title" style="background: linear-gradient(135deg, #fff, #ffbe76, #ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    The Ultimate Setup<br>Recommendations
+                </h2>
+                <p class="section-sub mx-auto">
+                    Curated picks from the gaming community — trusted peripherals that every serious gamer should consider.
+                </p>
+            </div>
+            <div class="gear-grid">
+                <div class="glass-card gear-card fade-in">
+                    <div class="gear-header">
+                        <div class="gear-icon">🖱️</div>
+                        <div>
+                            <div class="gear-name">MX Master 3S</div>
+                            <div class="gear-brand">Logitech</div>
+                        </div>
+                    </div>
+                    <p class="gear-specs">8,000 DPI sensor, MagSpeed electromagnetic scrolling, Quiet Clicks, multi-device pairing (up to 3).</p>
+                    <div class="gear-price">$99.99</div>
+                </div>
+                <div class="glass-card gear-card fade-in">
+                    <div class="gear-header">
+                        <div class="gear-icon">⌨️</div>
+                        <div>
+                            <div class="gear-name">Wooting 60HE</div>
+                            <div class="gear-brand">Wooting</div>
+                        </div>
+                    </div>
+                    <p class="gear-specs">Rapid Trigger, 0.1mm actuation point, adjustable travel distance, Hall Effect switches, full RGB.</p>
+                    <div class="gear-price">$174.99</div>
+                </div>
+                <div class="glass-card gear-card fade-in">
+                    <div class="gear-header">
+                        <div class="gear-icon">🎧</div>
+                        <div>
+                            <div class="gear-name">Arctis Nova Pro</div>
+                            <div class="gear-brand">SteelSeries</div>
+                        </div>
+                    </div>
+                    <p class="gear-specs">Active noise cancellation, dual hot-swappable batteries, 360° spatial audio, dedicated GameDAC.</p>
+                    <div class="gear-price">$349.99</div>
+                </div>
+                <div class="glass-card gear-card fade-in">
+                    <div class="gear-header">
+                        <div class="gear-icon">🖥️</div>
+                        <div>
+                            <div class="gear-name">ROG Swift PG27AQN</div>
+                            <div class="gear-brand">ASUS</div>
+                        </div>
+                    </div>
+                    <p class="gear-specs">27" WQHD, 360Hz refresh rate, 1ms response, IPS panel, G-Sync Ultimate, HDR 600.</p>
+                    <div class="gear-price">$799.99</div>
+                </div>
+                <div class="glass-card gear-card fade-in">
+                    <div class="gear-header">
+                        <div class="gear-icon">🎮</div>
+                        <div>
+                            <div class="gear-name">Xbox Elite 2</div>
+                            <div class="gear-brand">Microsoft</div>
+                        </div>
+                    </div>
+                    <p class="gear-specs">Adjustable-tension thumbsticks, wrap-around rubberized grip, interchangeable components, 40hr battery.</p>
+                    <div class="gear-price">$179.99</div>
+                </div>
+                <div class="glass-card gear-card fade-in">
+                    <div class="gear-header">
+                        <div class="gear-icon">🪑</div>
+                        <div>
+                            <div class="gear-name">Herman Miller Aeron</div>
+                            <div class="gear-brand">Herman Miller</div>
+                        </div>
+                    </div>
+                    <p class="gear-specs">Ergonomic mesh seating, PostureFit SL, 8Z Pellicle suspension, 12-year warranty, fully adjustable.</p>
+                    <div class="gear-price">$1,395.00</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SUPPORTED UPGRADES ===== -->
+    <section class="section" id="upgrades">
+        <div class="container">
+            <div class="text-center fade-in">
+                <span class="section-label">Compatible Hardware</span>
+                <h2 class="section-title" style="background: linear-gradient(135deg, #fff, #ffbe76, #ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    Upgrade Your Rig<br>With Confidence
+                </h2>
+                <p class="section-sub mx-auto">
+                    PlaySense helps you identify which components are bottlenecking your performance and suggests compatible upgrades.
+                </p>
+            </div>
+            <div class="upgrades-grid">
+                <div class="upgrade-card fade-in">
+                    <div class="emoji">🖥️</div>
+                    <h4>GPUs</h4>
+                    <p>RTX 40 & 50 Series, AMD RX 7000 & 9000</p>
+                </div>
+                <div class="upgrade-card fade-in">
+                    <div class="emoji">🧠</div>
+                    <h4>CPUs</h4>
+                    <p>Intel 14th & 15th Gen, AMD Ryzen 7000</p>
+                </div>
+                <div class="upgrade-card fade-in">
+                    <div class="emoji">💾</div>
+                    <h4>RAM</h4>
+                    <p>DDR4 & DDR5 kits, 16GB to 64GB</p>
+                </div>
+                <div class="upgrade-card fade-in">
+                    <div class="emoji">💽</div>
+                    <h4>SSDs</h4>
+                    <p>NVMe M.2, 1TB to 4TB</p>
+                </div>
+                <div class="upgrade-card fade-in">
+                    <div class="emoji">🔌</div>
+                    <h4>PSUs</h4>
+                    <p>80+ Gold & Platinum, 650W to 1200W</p>
+                </div>
+                <div class="upgrade-card fade-in">
+                    <div class="emoji">🖥️</div>
+                    <h4>Monitors</h4>
+                    <p>144Hz–360Hz, 1080p to 4K</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== HOW IT WORKS ===== -->
+    <section class="section steps-section" id="how-it-works">
+        <div class="container">
+            <div class="text-center fade-in">
+                <span class="section-label">How It Works</span>
+                <h2 class="section-title" style="background: linear-gradient(135deg, #fff, #ffbe76, #ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    Three Steps to<br>Maximum FPS
+                </h2>
+                <p class="section-sub mx-auto">
+                    No configuration files to edit. No registry keys to hunt down. Just launch PlaySense and let it work.
+                </p>
+            </div>
+            <div class="steps">
+                <div class="step fade-in">
+                    <div class="step-number">1</div>
+                    <h4>Scan Your System</h4>
+                    <p>PlaySense detects your CPU, GPU, RAM, and OS using native Windows APIs. It assigns a performance tier that guides every optimization decision.</p>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">2</div>
+                    <h4>Import Your Games</h4>
+                    <p>Auto-scan finds Steam, Epic, and GOG libraries. For everything else, use the native file dialog to import any .exe or game folder.</p>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">3</div>
+                    <h4>Optimize & Play</h4>
+                    <p>One click applies tier-appropriate settings to every config file it finds. If something crashes, the analyzer tells you exactly what to fix.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CTA ===== -->
+    <section class="section cta-section">
+        <div class="container">
+            <div class="cta-box fade-in">
+                <h2>Ready to Unlock Your<br>PC's Full Potential?</h2>
+                <p>
+                    PlaySense is completely free, open source, and runs entirely on your machine.
+                    No sign-ups, no data collection, no hidden costs — just better gaming performance.
+                </p>
+                <div class="cta-buttons">
+                    <a href="https://github.com" target="_blank" rel="noopener" class="btn btn-primary">
+                        📥 Download from GitHub
+                    </a>
+                    <a href="#features" class="btn btn-secondary">
+                        📖 Read the Docs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="navbar-brand">
+                        <span class="logo-icon">🎮</span>
+                        PlaySense
+                    </a>
+                    <p>
+                        The ultimate local PC game optimizer. Free, open source, and privacy-first.
+                        Built for gamers who want maximum performance without sacrificing their data.
+                    </p>
+                </div>
+                <div class="footer-col">
+                    <h5>Product</h5>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#gear">Gear</a></li>
+                        <li><a href="#upgrades">Upgrades</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h5>Resources</h5>
+                    <ul>
+                        <li><a href="https://github.com" target="_blank" rel="noopener">GitHub</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Release Notes</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h5>Legal</h5>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                        <li><a href="#">License (MIT)</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 PlaySense — MIT License</p>
+                <p>Made with ❤️ for gamers</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    /* ===== TYPEWRITER EFFECT ===== */
+    (function(){
+        const brandEl = document.getElementById('type-brand');
+        const line1El = document.getElementById('type-line1');
+        const line2El = document.getElementById('type-line2');
+        const cursorEl = document.getElementById('type-cursor');
+
+        const brandText = 'PlaySense AI';
+        const line1Text = "Unlock Your PC's";
+        const line2Text = 'Full Gaming Power';
+
+        function typeChar(el, text, speed, callback){
+            let i = 0;
+            function next(){
+                if(i < text.length){
+                    el.textContent += text[i];
+                    i++;
+                    setTimeout(next, speed);
+                } else if(callback) {
+                    callback();
+                }
+            }
+            next();
+        }
+
+        // Start typewriter after a short delay
+        setTimeout(() => {
+            typeChar(brandEl, brandText, 50, () => {
+                setTimeout(() => {
+                    typeChar(line1El, line1Text, 40, () => {
+                        setTimeout(() => {
+                            typeChar(line2El, line2Text, 40, () => {
+                                // Hide cursor after done
+                                setTimeout(() => cursorEl.classList.add('hidden'), 2000);
+                            });
+                        }, 200);
+                    });
+                }, 300);
+            });
+        }, 600);
+    })();
+
+    /* ===== PARTICLE BACKGROUND ===== */
+    (function(){
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let W, H;
+        const particles = [];
+        const PARTICLE_COUNT = 120;
+        let mouseX = -999, mouseY = -999;
+
+        function resize(){
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        class Particle {
+            constructor(){ this.reset(); }
+            reset(){
+                this.x = Math.random() * W;
+                this.y = Math.random() * H;
+                this.vx = (Math.random() - 0.5) * 0.3;
+                this.vy = (Math.random() - 0.5) * 0.3;
+                this.r = Math.random() * 1.8 + 0.3;
+                // Orange/gold color palette
+                const colors = [
+                    [255,107,53],
+                    [247,147,30],
+                    [255,190,118],
+                    [255,77,0],
+                ];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.alpha = Math.random() * 0.35 + 0.08;
+                this.baseAlpha = this.alpha;
+            }
+            update(){
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Mouse repulsion
+                const dx = this.x - mouseX;
+                const dy = this.y - mouseY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if(dist < 100){
+                    const force = (100 - dist) / 100;
+                    this.vx += (dx / dist) * force * 0.15;
+                    this.vy += (dy / dist) * force * 0.15;
+                }
+
+                // Dampen velocity
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+
+                // Wrap around
+                if(this.x < -10) this.x = W + 10;
+                if(this.x > W + 10) this.x = -10;
+                if(this.y < -10) this.y = H + 10;
+                if(this.y > H + 10) this.y = -10;
+            }
+            draw(){
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.alpha})`;
+                ctx.fill();
+
+                // Glow
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r * 3, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.alpha * 0.15})`;
+                ctx.fill();
+            }
+        }
+
+        for(let i = 0; i < PARTICLE_COUNT; i++){
+            particles.push(new Particle());
+        }
+
+        function drawLines(){
+            for(let i = 0; i < particles.length; i++){
+                for(let j = i + 1; j < particles.length; j++){
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if(dist < 140){
+                        const alpha = (1 - dist / 140) * 0.06;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(255,107,53,${alpha})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate(){
+            ctx.clearRect(0, 0, W, H);
+            particles.forEach(p => { p.update(); p.draw(); });
+            drawLines();
+            requestAnimationFrame(animate);
+        }
+        animate();
+    })();
+
+    /* ===== JAVASCRIPT ===== */
+    /* ===========================
+       3D TILT CARD (Hero)
+       =========================== */
+    (function() {
+        const card = document.getElementById('tilt-card');
+        const wrapper = document.getElementById('tilt-wrapper');
+        let currentX = 0, currentY = 0, targetX = 0, targetY = 0;
+
+        wrapper.addEventListener('mousemove', (e) => {
+            const rect = wrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -10;
+            const rotateY = ((x - centerX) / centerX) * 10;
+            targetX = rotateX;
+            targetY = rotateY;
+            card.style.boxShadow = `${-rotateY * 1.5}px ${rotateX * 1.5}px 50px rgba(255,107,53,0.12)`;
+        });
+
+        wrapper.addEventListener('mouseleave', () => {
+            targetX = 0;
+            targetY = 0;
+            card.style.boxShadow = '0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(255,107,53,0.05)';
+        });
+
+        function updateTilt() {
+            currentX += (targetX - currentX) * 0.08;
+            currentY += (targetY - currentY) * 0.08;
+            card.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg)`;
+            requestAnimationFrame(updateTilt);
+        }
+        updateTilt();
+    })();
+
+    /* ===========================
+       NAVBAR SCROLL EFFECT
+       =========================== */
+    window.addEventListener('scroll', () => {
+        document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    /* ===========================
+       PERFORMANCE BAR ANIMATION
+       =========================== */
+    setTimeout(() => {
+        document.getElementById('perf-fill').style.width = '94%';
+    }, 1000);
+
+    /* ===========================
+       SCROLL REVEAL
+       =========================== */
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    /* ===========================
+       MOBILE NAV CLOSE
+       =========================== */
+    document.querySelectorAll('.navbar-links a').forEach(link => {
+        link.addEventListener('click', () => {
+            document.querySelector('.navbar-links').classList.remove('open');
+        });
+    });
+    </script>
+</body>
+</html>
